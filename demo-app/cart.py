@@ -12,6 +12,8 @@ class Cart:
 
     def remove(self, name):
         if name in self.items:
+            item = self.items[name]
+            self._total -= item["price"] * item["qty"]
             del self.items[name]
 
     def total(self):
