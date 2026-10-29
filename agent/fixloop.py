@@ -165,10 +165,13 @@ def make_patch(box, fixed):
         old = box.originals.get(p)
         a = (old or "").splitlines(keepends=True)
         b = fixed[p].splitlines(keepends=True)
-        chunks.append("".join(difflib.unified_diff(
-            a, b,
-            fromfile=f"a/demo-app/{p}" if old is not None else "/dev/null",
-            tofile=f"b/demo-app/{p}")))
+        for line in difflib.unified_diff(
+                a, b,
+                fromfile=f"a/demo-app/{p}" if old is not None else "/dev/null",
+                tofile=f"b/demo-app/{p}"):
+            if not line.endswith("\n"):
+                line += "\n\\ No newline at end of file\n"
+            chunks.append(line)
     return "".join(chunks)
 
 

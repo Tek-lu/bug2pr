@@ -3,3 +3,6 @@
 
 out/
 samples/
+
+__pycache__/
+.pytest_cache/
