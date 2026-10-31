@@ -1,0 +1,19 @@
+{
+  "symptom": "Entries that were just read get thrown out of the cache while untouched ones stay",
+  "steps_to_reproduce": [
+    "c = LRUCache(2)",
+    "c.put('a', 1); c.put('b', 2)",
+    "c.get('a')",
+    "c.put('c', 3)",
+    "'a' is gone"
+  ],
+  "expected": "'b' is evicted because 'a' was used more recently",
+  "actual": "'a' is evicted",
+  "suspected_area": "lru.py put() eviction logic",
+  "search_keywords": [
+    "evict",
+    "popitem",
+    "LRUCache"
+  ],
+  "confidence": 0.6
+}

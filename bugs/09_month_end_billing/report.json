@@ -1,0 +1,18 @@
+{
+  "symptom": "Creating a subscription that starts on the 31st crashes with a ValueError",
+  "steps_to_reproduce": [
+    "from subscription import billing_dates",
+    "from datetime import date",
+    "billing_dates(date(2024, 1, 31), 3)",
+    "ValueError: day is out of range for month"
+  ],
+  "expected": "a list of 3 monthly billing dates",
+  "actual": "ValueError",
+  "suspected_area": "subscription.py billing_dates()",
+  "search_keywords": [
+    "billing_dates",
+    "add_months",
+    "ValueError"
+  ],
+  "confidence": 0.8
+}

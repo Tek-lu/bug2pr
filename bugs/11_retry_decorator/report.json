@@ -1,0 +1,16 @@
+{
+  "symptom": "A flaky API call that works on the third try returns None instead of its result",
+  "steps_to_reproduce": [
+    "wrap a function that fails twice then returns 'ok' with @retry(3)",
+    "call it",
+    "gets None"
+  ],
+  "expected": "'ok'",
+  "actual": "None",
+  "suspected_area": "retry.py wrapper()",
+  "search_keywords": [
+    "retry",
+    "wrapper"
+  ],
+  "confidence": 0.8
+}

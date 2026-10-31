@@ -1,0 +1,17 @@
+{
+  "symptom": "A user who switches language still gets the greeting in the old language",
+  "steps_to_reproduce": [
+    "s = GreetingService()",
+    "s.greet(1, 'Ann', 'en') -> 'Hello, Ann!'",
+    "s.greet(1, 'Ann', 'fr') -> still 'Hello, Ann!'"
+  ],
+  "expected": "'Bonjour, Ann!' for French",
+  "actual": "'Hello, Ann!'",
+  "suspected_area": "service.py greet() language handling",
+  "search_keywords": [
+    "greet",
+    "lang",
+    "cache"
+  ],
+  "confidence": 0.7
+}

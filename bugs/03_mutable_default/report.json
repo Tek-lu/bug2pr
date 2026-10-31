@@ -1,0 +1,17 @@
+{
+  "symptom": "Tags from earlier calls leak into later calls",
+  "steps_to_reproduce": [
+    "from tags import add_tag",
+    "add_tag('a')",
+    "add_tag('b')",
+    "second call returns ['a', 'b']"
+  ],
+  "expected": "['b']",
+  "actual": "['a', 'b']",
+  "suspected_area": "tags.py add_tag()",
+  "search_keywords": [
+    "add_tag",
+    "tags"
+  ],
+  "confidence": 0.85
+}

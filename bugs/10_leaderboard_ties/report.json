@@ -1,0 +1,16 @@
+{
+  "symptom": "Two players with the same score are shown at different positions on the leaderboard",
+  "steps_to_reproduce": [
+    "from leaderboard import rank",
+    "rank({'ann': 5, 'bob': 5})",
+    "returns [(1, 'ann'), (2, 'bob')]"
+  ],
+  "expected": "both players share the same rank",
+  "actual": "they get ranks 1 and 2",
+  "suspected_area": "leaderboard.py rank()",
+  "search_keywords": [
+    "rank",
+    "ties"
+  ],
+  "confidence": 0.85
+}

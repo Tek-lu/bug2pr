@@ -1,0 +1,18 @@
+{
+  "symptom": "Customers who use a coupon are still charged tax on the full price",
+  "steps_to_reproduce": [
+    "from shop.checkout import checkout",
+    "from shop.models import Item",
+    "checkout([Item('a', 1000), Item('b', 1000, taxable=False)], ('percent', 10))",
+    "total is 2000"
+  ],
+  "expected": "total 1980: tax should be 180 because the discount also lowers the taxable amount",
+  "actual": "total 2000, tax is 200",
+  "suspected_area": "shop/coupons.py discount_cents()",
+  "search_keywords": [
+    "coupon",
+    "discount",
+    "tax"
+  ],
+  "confidence": 0.6
+}

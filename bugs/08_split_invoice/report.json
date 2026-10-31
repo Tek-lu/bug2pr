@@ -1,0 +1,16 @@
+{
+  "symptom": "An invoice of 10.00 split three ways only collects 9.99",
+  "steps_to_reproduce": [
+    "from invoice import split_invoice",
+    "split_invoice(1000, ['ann','bob','cy'])",
+    "every share is 3.33"
+  ],
+  "expected": "shares add up to 10.00 (ann 3.34, bob 3.33, cy 3.33)",
+  "actual": "3.33 each, one cent is lost",
+  "suspected_area": "invoice.py format_cents rounding",
+  "search_keywords": [
+    "format_cents",
+    "split_invoice"
+  ],
+  "confidence": 0.5
+}

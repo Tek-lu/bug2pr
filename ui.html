@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bug2pr</title>
+<style>
+  :root { --bg:#0f1115; --card:#181b22; --line:#2a2f3a; --text:#e6e8ee; --dim:#8b93a5;
+          --accent:#6aa9ff; --ok:#3ecf8e; --bad:#ff6b6b; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:28px 20px 60px; }
+  h1 { margin:0 0 4px; font-size:26px; }
+  .sub { color:var(--dim); margin:0 0 22px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px;
+          padding:16px 18px; margin-bottom:16px; }
+  .card h2 { margin:0 0 10px; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  input[type=file] { color:var(--dim); }
+  input[type=text], input[type=password] { background:#0b0d12; color:var(--text); border:1px solid var(--line);
+          border-radius:8px; padding:8px 10px; font:14px ui-monospace, Consolas, monospace; flex:1; min-width:220px; }
+  .field { margin-top:10px; }
+  .field label { display:block; color:var(--dim); font-size:12px; margin-bottom:4px; }
+  button { background:var(--accent); color:#0b1020; border:0; border-radius:8px;
+           padding:9px 16px; font-weight:600; font-size:14px; cursor:pointer; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  button.pr { background:var(--ok); }
+  .steps { display:flex; gap:8px; flex-wrap:wrap; }
+  .step { padding:6px 12px; border-radius:999px; border:1px solid var(--line); color:var(--dim); font-size:13px; }
+  .step.active { border-color:var(--accent); color:var(--accent); }
+  .step.done { border-color:var(--ok); color:var(--ok); }
+  .step.bad { border-color:var(--bad); color:var(--bad); }
+  pre { margin:0; white-space:pre-wrap; word-break:break-word;
+        font:12.5px/1.5 ui-monospace, Consolas, monospace; }
+  #log { max-height:340px; overflow:auto; background:#0b0d12; border-radius:8px; padding:12px; }
+  #patch { background:#0b0d12; border-radius:8px; padding:12px; overflow:auto; }
+  .add { color:var(--ok); } .del { color:var(--bad); } .hunk { color:var(--accent); }
+  dl { margin:0; display:grid; grid-template-columns:130px 1fr; gap:6px 14px; }
+  dt { color:var(--dim); } dd { margin:0; }
+  ul.checks { list-style:none; margin:0; padding:0; }
+  ul.checks li { padding:3px 0; }
+  .pass { color:var(--ok); font-weight:600; } .fail { color:var(--bad); font-weight:600; }
+  a { color:var(--accent); }
+  .hidden { display:none; }
+  .hint { color:var(--dim); font-size:12px; margin-top:4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>bug2pr</h1>
+  <p class="sub">Screen recording and voice note in, tested pull request out.</p>
+
+  <div class="card">
+    <h2>1. Upload a bug recording</h2>
+    <div class="row">
+      <input id="file" type="file" accept="video/*">
+    </div>
+    <div class="field">
+      <label for="repo">GitHub repo URL (leave empty to use the built-in demo app)</label>
+      <input id="repo" type="text" placeholder="https://github.com/owner/name" autocomplete="off">
+    </div>
+    <div class="field" id="tokenField">
+      <label for="token">Fine-grained token for that repo only (Contents + Pull requests: read and write)</label>
+      <input id="token" type="password" placeholder="github_pat_..." autocomplete="off">
+      <div class="hint">Sent to this server only. It is never given to the agent or the sandbox, and is cleared when the job ends.</div>
+    </div>
+    <div class="field" id="testField">
+      <label for="tcmd">Test command (optional, default: python -m pytest -q)</label>
+      <input id="tcmd" type="text" placeholder="python -m pytest -q" autocomplete="off">
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button id="start">Start</button>
+      <span id="msg" class="sub" style="margin:0"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Progress</h2>
+    <div class="steps">
+      <span class="step" id="s-understand">Understand recording</span>
+      <span class="step" id="s-fix">Fix and verify</span>
+      <span class="step" id="s-pr">Pull request</span>
+    </div>
+  </div>
+
+  <div class="card hidden" id="reportCard">
+    <h2>Bug report</h2>
+    <dl id="report"></dl>
+  </div>
+
+  <div class="card">
+    <h2>Agent log</h2>
+    <pre id="log"></pre>
+  </div>
+
+  <div class="card hidden" id="verifyCard">
+    <h2>Verification</h2>
+    <ul class="checks" id="checks"></ul>
+    <div id="summaryWrap" style="margin-top:12px">
+      <h2 style="margin-top:6px">Agent explanation</h2>
+      <pre id="summary"></pre>
+    </div>
+  </div>
+
+  <div class="card hidden" id="patchCard">
+    <h2>Patch</h2>
+    <pre id="patch"></pre>
+  </div>
+
+  <div class="card hidden" id="prCard">
+    <h2>Pull request</h2>
+    <div class="row">
+      <button id="prBtn" class="pr">Open pull request</button>
+      <span id="prLink"></span>
+    </div>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+let jobId = null, next = 0;
+
+function setStep(id, cls) { $(id).className = "step " + (cls || ""); }
+
+function renderSteps(d) {
+  const s = d.stage, st = d.status;
+  setStep("s-understand", s === "understand" || s === "upload" ? (st === "error" ? "bad" : "active") : "done");
+  if (s === "understand" || s === "upload") { setStep("s-fix", ""); setStep("s-pr", ""); return; }
+  if (s === "fix") { setStep("s-fix", st === "error" ? "bad" : "active"); setStep("s-pr", ""); return; }
+  setStep("s-fix", st === "failed" ? "bad" : "done");
+  setStep("s-pr", st === "done" ? "done" : (st === "pr_opening" ? "active" : (st === "pr_failed" ? "bad" : "")));
+}
+
+function renderReport(r) {
+  if (!r) return;
+  $("reportCard").classList.remove("hidden");
+  const rows = [["Symptom", r.symptom], ["Expected", r.expected], ["Actual", r.actual],
+                ["Suspected area", r.suspected_area], ["Confidence", r.confidence]];
+  $("report").innerHTML = "";
+  for (const [k, v] of rows) {
+    const dt = document.createElement("dt"); dt.textContent = k;
+    const dd = document.createElement("dd"); dd.textContent = v ?? "";
+    $("report").append(dt, dd);
+  }
+}
+
+function renderChecks(c, summary) {
+  if (!c) return;
+  $("verifyCard").classList.remove("hidden");
+  $("checks").innerHTML = "";
+  for (const [k, v] of Object.entries(c)) {
+    const li = document.createElement("li");
+    const tag = document.createElement("span");
+    tag.className = v ? "pass" : "fail"; tag.textContent = v ? "PASS" : "FAIL";
+    li.append(tag, " " + k.replaceAll("_", " "));
+    $("checks").append(li);
+  }
+  $("summary").textContent = summary || "";
+}
+
+function renderPatch(p) {
+  if (!p) return;
+  $("patchCard").classList.remove("hidden");
+  const box = $("patch"); box.innerHTML = "";
+  for (const line of p.split("\n")) {
+    const span = document.createElement("span");
+    if (line.startsWith("+") && !line.startsWith("+++")) span.className = "add";
+    else if (line.startsWith("-") && !line.startsWith("---")) span.className = "del";
+    else if (line.startsWith("@@")) span.className = "hunk";
+    span.textContent = line + "\n";
+    box.append(span);
+  }
+}
+
+function renderPr(d) {
+  const show = ["ready", "pr_opening", "pr_failed", "done"].includes(d.status);
+  $("prCard").classList.toggle("hidden", !show);
+  $("prBtn").disabled = !(d.status === "ready" || d.status === "pr_failed");
+  if (d.pr_url) {
+    $("prLink").innerHTML = "";
+    const a = document.createElement("a"); a.href = d.pr_url; a.target = "_blank"; a.textContent = d.pr_url;
+    $("prLink").append("Opened: ", a);
+  }
+}
+
+async function poll() {
+  if (!jobId) return;
+  const d = await (await fetch(`/api/jobs/${jobId}?after=${next}`)).json();
+  if (d.lines.length) {
+    const log = $("log");
+    const atBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 20;
+    log.textContent += d.lines.join("\n") + "\n";
+    if (atBottom) log.scrollTop = log.scrollHeight;
+    next = d.next;
+  }
+  renderSteps(d); renderReport(d.report); renderChecks(d.checks, d.summary);
+  renderPatch(d.patch); renderPr(d);
+  if (d.status === "running" || d.status === "pr_opening") setTimeout(poll, 800);
+  else { $("start").disabled = false; }
+}
+
+$("start").onclick = async () => {
+  const f = $("file").files[0];
+  if (!f) { $("msg").textContent = "Choose a video first."; return; }
+  $("msg").textContent = "Uploading...";
+  $("start").disabled = true;
+  const fd = new FormData();
+  fd.append("file", f);
+  fd.append("repo_url", $("repo").value);
+  fd.append("token", $("token").value);
+  fd.append("test_cmd", $("tcmd").value);
+  const r = await fetch("/api/upload", { method: "POST", body: fd });
+  if (!r.ok) {
+    $("msg").textContent = (await r.json()).detail || "Upload failed";
+    $("start").disabled = false; return;
+  }
+  $("token").value = "";
+  $("msg").textContent = "";
+  jobId = (await r.json()).job_id; next = 0;
+  for (const id of ["reportCard", "verifyCard", "patchCard", "prCard"]) $(id).classList.add("hidden");
+  $("log").textContent = ""; $("prLink").textContent = "";
+  poll();
+};
+
+$("prBtn").onclick = async () => {
+  $("prBtn").disabled = true;
+  const r = await fetch(`/api/jobs/${jobId}/pr`, { method: "POST" });
+  if (!r.ok) { $("msg").textContent = (await r.json()).detail || "Could not start PR"; return; }
+  poll();
+};
+</script>
+</body>
+</html>

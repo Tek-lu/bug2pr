@@ -1,0 +1,17 @@
+{
+  "symptom": "average() crashes on empty input",
+  "steps_to_reproduce": [
+    "from stats import average",
+    "average([])",
+    "ZeroDivisionError",
+    "average(None) raises TypeError"
+  ],
+  "expected": "0.0 for [] and None",
+  "actual": "ZeroDivisionError / TypeError",
+  "suspected_area": "stats.py average()",
+  "search_keywords": [
+    "average",
+    "ZeroDivisionError"
+  ],
+  "confidence": 0.9
+}

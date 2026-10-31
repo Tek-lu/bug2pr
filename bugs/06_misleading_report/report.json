@@ -1,0 +1,17 @@
+{
+  "symptom": "Items whose stock is exactly at the threshold are not listed as low",
+  "steps_to_reproduce": [
+    "from inventory import low_items",
+    "low_items({'Pen': 5, 'Ink': 50}, 5)",
+    "returns [] but 'pen' should be listed"
+  ],
+  "expected": "['pen']",
+  "actual": "[]",
+  "suspected_area": "utils.py clean() name normalization drops the item",
+  "search_keywords": [
+    "clean",
+    "low_items",
+    "utils"
+  ],
+  "confidence": 0.6
+}
